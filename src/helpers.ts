@@ -1,4 +1,3 @@
-import { TextLoader } from "langchain/document_loaders/fs/text";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
@@ -7,7 +6,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { PromptTemplate } from "langchain/prompts";
 import { Document } from "langchain/document";
 
-import { OPENAI_API_KEY } from "./config.js";
+import { OPENAI_API_KEY, SENSITIVE_FIELDS } from "./config.js";
 
 export const load = async (value: string) => {
   const doc = new Document({ pageContent: value });
@@ -47,4 +46,18 @@ export const retrieval = async ({ vectorStore, template }: any) => {
     ...(template && { prompt: PromptTemplate.fromTemplate(template) }),
   });
   return chain;
+};
+
+export const removeEmpty = (obj: any): any =>
+  Object.entries(obj)
+    .filter(([_, v]) => v != null)
+    .reduce(
+      (acc, [k, v]) => ({ ...acc, [k]: v === Object(v) ? removeEmpty(v) : v }),
+      {}
+    );
+
+export const removeSensitiveFields = (obj: any) => {
+  SENSITIVE_FIELDS.forEach((field: string) => {
+    delete obj[field];
+  });
 };

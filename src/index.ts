@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from "express";
+import { removeEmpty, removeSensitiveFields } from "./helpers.js";
 import askQuestion from "./askQuestion.js";
 import askRecommendation from "./askRecomendation.js";
 import { PORT } from "./config.js";
@@ -16,7 +17,20 @@ app.post("/question", async (req: Request, res: Response) => {
 
 app.post("/recommendation", async (req: Request, res: Response) => {
   const { query, policy } = req.body;
-  const answer = await askRecommendation(JSON.stringify(query), policy);
+
+  const transformedQuery = {
+    ...removeEmpty(query),
+    addresses: {
+      origin: removeEmpty(query.addresses[0]),
+      destination: removeEmpty(query.addresses[1]),
+    },
+  };
+  removeSensitiveFields(transformedQuery);
+
+  const answer = await askRecommendation(
+    JSON.stringify(transformedQuery),
+    policy
+  );
 
   res.json({ recomendation: answer });
 });
